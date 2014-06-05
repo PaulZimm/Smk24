@@ -45,7 +45,7 @@
 	foreach ($form_ids as $form_id) {
 		$result = $wpdb->get_row("SELECT display_meta FROM shop_rg_form_meta WHERE form_id='$form_id'", ARRAY_A);
 		$data = json_decode($result['display_meta'], true); # Decode WordPress form layout into an Array
-		# if (!$data) @mail('paul@zimmtech.net', $_SERVER['REQUEST_URI'], "JSON Error on 'shop_rg_form_meta' WHERE form_id='$form_id'", 'From: admin@smk24.com');
+		if (!$data) @mail('paul@zimmtech.net', $_SERVER['REQUEST_URI'], "JSON Error on 'shop_rg_form_meta' WHERE form_id='$form_id'", 'From: admin@smk24.com');
 		for ($key=4; $key<40; $key++) {
 			$sku = trim($data['fields'][$key]['adminLabel']);
 			if ((strlen($sku) >= 3) && ($sku!='Yes 18') && ($sku!='I am over 18')) {
@@ -69,7 +69,7 @@
 	$sorting = array();
 	$search_criteria = array();
 	$paging = array('offset' => 0, 'page_size' => 99999);
-	$daysAgo = 1; // Gets X number days of orders [Start Date]
+	$daysAgo = 3; // Gets X number days of orders [Start Date]
 	$nextDay = 1; // Gets 1 day past today of order [End Date]
 	$prevWeek = time() - ($daysAgo * 24 * 60 * 60);
 	$nextDay  = time() + ($nextDay * 24 * 60 * 60);
@@ -99,19 +99,20 @@
 		$message .= "Hostname:  $hostname \n\n";
 		$message .= "Dates from: $search_criteria[start_date] to $search_criteria[end_date] \n\n";
 		$message .= str_replace('Array', 'Visitor Requested:', print_r($_GET, true));
-		$message .= "\nSent from: http://smk24.com/shipstationxml.php?debug=1";
+		$message .= "\nDebug Input: http://smk24.com/shipstationxml.php?debug=1";
+		$message .= "\nView Output: http://smk24.com/shipstationxml.php";
 		$subject = 'shipstationxml.php';
 		$headers = 'From: Smk24 Admin <admin@smk24.com>' . "\r\n";
 		@mail('paul@zimmtech.com', $subject, $message, $headers);
-		@mail('zmaster@bellsouth.net', $subject, $message, $headers);
+		// @mail('yannick@ayache.net', $subject, $message, $headers);
 		// @mail('ron@rygrp.com', $subject, $message, $headers);
 	}
 
 	/** DEBUG VIEWER **/
 	/* www.smk24.com/shipstationxml.php?debug=1 */
 	if ($_GET['debug']) {
-		print "<pre> Dates from: $search_criteria[start_date] to $search_criteria[end_date] \n\n";
-		print "<b>Total count: ".count($items)."</b> \n\n";
+		print "<pre>Total count: <strong style='color:red'>".count($items)."</strong> \n";
+		print " Dates from: $search_criteria[start_date] to $search_criteria[end_date] \n\n";
 		echo str_replace('Array', 'Form_IDs', print_r($form_ids, true));
 		print_r($items);
 		exit(); // Halt!
@@ -173,27 +174,23 @@
 		$data['BillToName'] = ucwords(trim($item['1.3'].' '.$item['1.6']));
 		$data['BillToFirstName'] = ucwords(trim($item['1.3']));
 		$data['BillToLastName'] = ucwords(trim($item['1.6']));
-		$data['CustomerNotes'] = str_replace('https://', '', trim($item['source_url']));
+		$data['CustomerNotes'] = str_replace('https://', 'http://', trim($item['source_url']));
 		$data['InternalNotes'] = 'Transaction# '.trim($item['transaction_id']);
 
-		// 34->Oil Bundle 5pk, 36->Oil Bundle 10pk
-		if (($data['FormID']=='34') || ($data['FormID']=='36')) {
-			# Do something...
-		}
-
-		// www.smk24.com/ehookah5pkgroupon/
+		// www.smk24.com/oil5-5pk/
 		// www.smk24.com/ehookah10pkgroupon/
-		// 47->Ehookah 10pk, 48->Ehookah 5pk
-		if (($data['FormID']=='47') || ($data['FormID']=='48')) {
+		if (($data['FormID']=='34') || ($data['FormID']=='36') ||
+		    ($data['FormID']=='47') || ($data['FormID']=='48')) {
 			$OilOrHooka = true;
-			unset($hookas); # Ex: EH700-MANGO, EH700-APPLE
+			unset($hookas); # Ex: EH701-MANGO, 61300-Banana
 			$hookas[] = trim(stristr($item['79'], '|', 1).'-'.stristr( $item['5'], '|', 1));
 			$hookas[] = trim(stristr($item['80'], '|', 1).'-'.stristr($item['77'], '|', 1));
 			$hookas[] = trim(stristr($item['81'], '|', 1).'-'.stristr($item['76'], '|', 1));
 			$hookas[] = trim(stristr($item['82'], '|', 1).'-'.stristr($item['75'], '|', 1));
 			$hookas[] = trim(stristr($item['83'], '|', 1).'-'.stristr($item['78'], '|', 1));
-			// 47->Ehookah 10pk
-			if ($data['FormID']=='47') {
+			// 36 -> Oil5 10pack
+			// 47 -> Ehookah 10pk
+			if (($data['FormID']=='36') || ($data['FormID']=='47')) {
 				$hookas[] = trim(stristr($item['85'], '|', 1).'-'.stristr($item['84'], '|', 1));
 				$hookas[] = trim(stristr($item['87'], '|', 1).'-'.stristr($item['86'], '|', 1));
 				$hookas[] = trim(stristr($item['91'], '|', 1).'-'.stristr($item['88'], '|', 1));
