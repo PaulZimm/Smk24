@@ -105,12 +105,10 @@
 		$message .= "\nView Output: http://smk24.com/shipstationxml.php";
 
 		$subject = 'shipstationxml.php';
-		$headers  = 'MIME-Version: 1.0' . "\r\n";
-		$headers .= 'Content-type: text/html; charset=iso-8859-1' . "\r\n";
+		# $headers  = 'MIME-Version: 1.0' . "\r\n";
+		# $headers .= 'Content-type: text/html; charset=iso-8859-1' . "\r\n";
 		$headers = 'From: Smk24 Admin <admin@smk24.com>' . "\r\n";
-		@mail('paul@zimmtech.com', $subject, $message, $headers);
-		@mail('yannick@ayache.net', $subject, $message, $headers);
-		@mail('ron@rygrp.com', $subject, $message, $headers);
+		@mail('paul@zimmtech.net', $subject, $message, $headers);
 	}
 
 	/** DEBUG VIEWER **/
