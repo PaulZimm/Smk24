@@ -162,7 +162,7 @@
 		$data['OrderId'] = trim($item['id']);				# Ex: 71574
 		$data['OrderDate'] = trim($order_date);				# Ex: 5/30/2013 23:00
 		$data['ExportDate'] = date('n/d/Y H:i');			# Ex: 6/01/2014 01:01
-		$data['Email'] = trim($item['4']);					# Ex: paul@zimmtech.net
+		$data['Email'] = trim($item['4']);				# Ex: paul@zimmtech.net
 
 		$ship_array = explode('|', trim($item['16']));		# Ex: economy|0
 		$data['ShippingClass'] = trim($ship_array[0]);		# Ex: standard|5
