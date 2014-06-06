@@ -5,9 +5,9 @@
  * 
  * Groupon Orders to ShipStation XML 
  * Usage:  http://www.smk24.com/shipstationxml.php?debug=1
- * https://www.smk24.com/shipstationxml.php?action=export&start_date=6/01/2014&end_date=6/05/2014
+ * https://github.com/PaulZimm/Smk24/blob/master/shipstationxml.php
  * 
- * @version	GF2ShipStationXML 1.0.4
+ * @version	GF2ShipStationXML 1.1
  * @author	Paul Zimm <paulzimm@gmail.com>
  * 
  * @param	string	$action			This value will always be “export” when ShipStation is requesting order information.
@@ -22,13 +22,15 @@
 	// namespace PaulZimm;
 	ini_set('memory_limit', '-1'); # Needed :)
 
+	if ($_GET['action']=='shipnotify') die('OK'); # Abort: No need to process if only tracking number is updated via ShipStation XML request
+
+
 	/* ************************** */
 	/* SET ACTIVE GRAVITYFORM IDs */
 	/* ************************** */
 
 	$form_ids = array('5','12','13','18','26','29','32','34','36','39','41','42','43','44','45','47','48','49'); # Hard coded for now
-	# $force_start_date = '2014-06-01';
-	# $force_end_date   = '2014-06-05';
+	# $force_start_date = '2014-06-01'; $force_end_date = '2014-06-05';
 
 	/** Setup the WordPress Environment **/
 	require(dirname(__FILE__).'/wp-config.php');
@@ -41,7 +43,7 @@
 	/* ******************************************** */
 
 	$_count = 0;
-	// $wpdb->query('DELETE FROM shop_pz_items WHERE id > 0');
+	/* $wpdb->query('DELETE FROM shop_pz_items WHERE id > 0');
 	foreach ($form_ids as $form_id) {
 		$result = $wpdb->get_row("SELECT display_meta FROM shop_rg_form_meta WHERE form_id='$form_id'", ARRAY_A);
 		$data = json_decode($result['display_meta'], true); # Decode WordPress form layout into an Array
@@ -55,7 +57,7 @@
 				// $wpdb->query("INSERT INTO shop_pz_items SET id='$_count', form_id='$form_id', item_sku='$item_sku', item_name='$item_name'");
 			}
 		}
-	}
+	} */
 
 
 	/* ********************************************* */
@@ -69,7 +71,7 @@
 	$sorting = array();
 	$search_criteria = array();
 	$paging = array('offset' => 0, 'page_size' => 99999);
-	$daysAgo = 3; // Gets X number days of orders [Start Date]
+	$daysAgo = 2; // Gets X number days of orders [Start Date]
 	$nextDay = 1; // Gets 1 day past today of order [End Date]
 	$prevWeek = time() - ($daysAgo * 24 * 60 * 60);
 	$nextDay  = time() + ($nextDay * 24 * 60 * 60);
@@ -83,7 +85,6 @@
 	}
 
 	/** EXECUTE GRAVITY FORMS API **/
-	/* /wp-content/plugins/gravityforms/includes/api.php */
 	if (is_numeric($_GET['id'])) {
 		$items = $gf->get_entry($_GET['id']); # Gravity Forms get single form entry
 	} else {
@@ -92,20 +93,24 @@
 	}
 
 	/** EMAIL OUTPUT **/
-	if ($_GET) {
+	if ($_GET['action'] == 'export') {
 		$visitorip = getenv('REMOTE_ADDR');
 		$hostname  = gethostbyaddr($visitorip);
 		$message  = "IP Address: $visitorip \n";
 		$message .= "Hostname:  $hostname \n\n";
-		$message .= "Dates from: $search_criteria[start_date] to $search_criteria[end_date] \n\n";
+		$message .= "Forced dates: $search_criteria[start_date] to $search_criteria[end_date] \n";
+		$message .= "Query returned: ".count($items)." results\n\n";
 		$message .= str_replace('Array', 'Visitor Requested:', print_r($_GET, true));
 		$message .= "\nDebug Input: http://smk24.com/shipstationxml.php?debug=1";
 		$message .= "\nView Output: http://smk24.com/shipstationxml.php";
+
 		$subject = 'shipstationxml.php';
+		$headers  = 'MIME-Version: 1.0' . "\r\n";
+		$headers .= 'Content-type: text/html; charset=iso-8859-1' . "\r\n";
 		$headers = 'From: Smk24 Admin <admin@smk24.com>' . "\r\n";
 		@mail('paul@zimmtech.com', $subject, $message, $headers);
-		// @mail('yannick@ayache.net', $subject, $message, $headers);
-		// @mail('ron@rygrp.com', $subject, $message, $headers);
+		@mail('yannick@ayache.net', $subject, $message, $headers);
+		@mail('ron@rygrp.com', $subject, $message, $headers);
 	}
 
 	/** DEBUG VIEWER **/
@@ -141,6 +146,7 @@
 		return $str;
 	}
 
+	/* START MAIN XML LOOP */
 	foreach ($items as $item):
 
 		unset($data); // Entry data to be exported
@@ -175,12 +181,10 @@
 		$data['BillToFirstName'] = ucwords(trim($item['1.3']));
 		$data['BillToLastName'] = ucwords(trim($item['1.6']));
 		$data['CustomerNotes'] = str_replace('https://', 'http://', trim($item['source_url']));
-		$data['InternalNotes'] = 'Transaction# '.trim($item['transaction_id']);
 
 		// www.smk24.com/oil5-5pk/
 		// www.smk24.com/ehookah10pkgroupon/
-		if (($data['FormID']=='34') || ($data['FormID']=='36') ||
-		    ($data['FormID']=='47') || ($data['FormID']=='48')) {
+		if (($data['FormID']=='34') || ($data['FormID']=='36') || ($data['FormID']=='47') || ($data['FormID']=='48')) {
 			$OilOrHooka = true;
 			unset($hookas); # Ex: EH701-MANGO, 61300-Banana
 			$hookas[] = trim(stristr($item['79'], '|', 1).'-'.stristr( $item['5'], '|', 1));
@@ -208,7 +212,7 @@
 			// DISABLED for Oil Bundles and Ehooka Groupons
 			// Get META content from DB by Groupon Code and Gravity Form ID
 			$result = $wpdb->get_row("SELECT meta FROM shop_rg_coupons WHERE form_id='".$data['FormID']."' AND meta LIKE '%".$data['Groupon']."%'", ARRAY_A);
-			if (!$result) @mail('paul@zimmtech.net', 'ShipStationXML?code='.$data['Groupon'].'&form='.$data['FormID'], 'MySQL Error finding Groupon Code!', 'From: admin@smk24.com');
+			# if (!$result) @mail('paul@zimmtech.net', 'ShipStationXML?code='.$data['Groupon'].'&form='.$data['FormID'], 'MySQL Error finding Groupon Code!', 'From: admin@smk24.com');
 			$meta = explode('"', $result['meta']);
 			$coupon_name = trim($meta[3]); # Ex: Atmos Optimus Black
 			$coupon_code = trim($meta[7]); # Ex: DWTXTWKW
@@ -227,7 +231,7 @@
 			$items_list .= itemsXML($data['SKU'], $data['ItemName'], $data['Quantity'], $coupon_cost);
 		}
 
-		/** Now Loop through all possible AddOn/Upsale items available **/
+		/** Loop through all possible AddOn/Upsale items available **/
 		unset($data['OrderTotal']);
 		for ($i=35; $i<=125; $i++) {
 			if (($i==55) || ($i==56) || ($i==57)) {
@@ -272,7 +276,6 @@
     <ShippingMethod><?=$data['ShippingClass']?></ShippingMethod>
     <ShippingAmount><?=$data['ShippingCost']?></ShippingAmount>
     <CustomerNotes><![CDATA[<?=$data['CustomerNotes']?>]]></CustomerNotes>
-    <InternalNotes><![CDATA[<?=$data['InternalNotes']?>]]></InternalNotes>
     <Customer>
       <CustomerCode><?=$data['OrderId']?></CustomerCode>
       <BillTo>
