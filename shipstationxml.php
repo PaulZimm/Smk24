@@ -21,7 +21,6 @@
 
 	// namespace PaulZimm;
 	ini_set('memory_limit', '-1'); # Needed :)
-
 	if ($_GET['action']=='shipnotify') die('OK'); # Abort: No need to process if only tracking number is updated via ShipStation XML request
 
 
