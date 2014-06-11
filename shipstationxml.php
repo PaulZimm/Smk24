@@ -4,8 +4,7 @@
  * Gravity Forms API to ShipStation XML © Copyright R&Y Group 2014
  * 
  * Groupon Orders to ShipStation XML 
- * Usage:  http://www.smk24.com/shipstationxml.php?debug=1
- * https://github.com/PaulZimm/Smk24/blob/master/shipstationxml.php
+ * Usage:  http://www.smk24.com/shipstationtest.php?action=export
  * 
  * @version	GF2ShipStationXML 1.1
  * @author	Paul Zimm <paulzimm@gmail.com>
