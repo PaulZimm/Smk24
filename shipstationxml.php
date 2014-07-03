@@ -74,7 +74,7 @@
 	$prevWeek = time() - ($daysAgo * 24 * 60 * 60);
 	$nextDay  = time() + ($nextDay * 24 * 60 * 60);
 
-	if ($force_start_date || $force_end_date) {
+	if ($force_start_date && $force_end_date) {
 		$search_criteria["start_date"] = $force_start_date;
 		$search_criteria["end_date"]   = $force_end_date;
 	} else {
