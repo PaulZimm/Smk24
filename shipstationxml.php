@@ -27,7 +27,7 @@
 	/* SET ACTIVE GRAVITYFORM IDs */
 	/* ************************** */
 
-	$form_ids = array('5','12','13','18','26','29','32','34','36','39','41','42','43','44','45','47','48','49'); # Hard coded for now
+	$form_ids = array('5','12','13','18','26','29','32','34','36','39','41','42','43','44','45','47','48','49', '50'); # Hard coded for now
 	# $force_start_date = '2014-06-01'; $force_end_date = '2014-06-05';
 
 	/** Setup the WordPress Environment **/
